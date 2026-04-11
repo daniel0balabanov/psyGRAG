@@ -1,0 +1,3 @@
+{"query":"Какие диагностические критерии депрессивного эпизода описаны в источнике?","expected_sources":["data/corpus/depression_intro.pdf"]}
+{"query":"Как когнитивные искажения связаны с тревожностью?","expected_sources":["data/corpus/cbt_notes.docx"]}
+{"query":"Какие маркеры эмоционального выгорания повторяются в обзорах?","expected_sources":["https://example.org/burnout-review"]}

@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+data/
+
+# RAG data, books, indexes
+data/
+*.pdf
+*.epub
+*.docx
+*.mobi
+*.djvu
+*.pkl
+*.chroma
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/

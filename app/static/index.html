@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Psychology RAG</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <span class="badge">RAG Assistant</span>
+      <h1>Psychology Literature RAG</h1>
+      <p>Введите вопрос и получите ответ с цитатами из корпуса.</p>
+    </header>
+
+    <section class="card controls">
+      <div class="panel-head">
+        <h2>Запрос</h2>
+      </div>
+      <label class="label" for="query">Ваш вопрос</label>
+      <textarea id="query" placeholder="Например: Какие техники помогают справляться со стрессом?"></textarea>
+      <div class="actions">
+        <button id="askBtn" type="button">Отправить запрос</button>
+        <span id="status" class="status-pill muted" aria-live="polite"></span>
+      </div>
+      <p class="hint">Подсказка: Ctrl+Enter (или Cmd+Enter) отправляет запрос.</p>
+    </section>
+
+    <section id="error" class="card error hidden" aria-live="assertive"></section>
+
+    <section id="result" class="card hidden">
+      <div class="panel-head">
+        <h2>Результат</h2>
+      </div>
+
+      <div id="answerSkeleton" class="answer-skeleton hidden" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <section class="subcard">
+        <h3>Обзор темы</h3>
+        <pre id="overview"></pre>
+      </section>
+
+      <section class="subcard">
+        <h3>Методы самопомощи (для клиента)</h3>
+        <pre id="selfHelp"></pre>
+      </section>
+
+      <section class="subcard">
+        <h3>Рекомендации для терапевта</h3>
+        <pre id="therapist"></pre>
+      </section>
+
+      <section class="subcard">
+        <h3>Источники</h3>
+        <ul id="citations" class="citations"></ul>
+      </section>
+
+      <details class="subcard">
+        <summary>Debug</summary>
+        <pre id="debug"></pre>
+      </details>
+    </section>
+  </main>
+
+  <script type="module" src="/static/ui.js"></script>
+</body>
+</html>

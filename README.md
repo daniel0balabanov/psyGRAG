@@ -1,13 +1,13 @@
 # Local Psychology Literature RAG
 
-Локальная система анализа психологической литературы на базе:
-- Ollama + Gemma (генерация),
-- BGE-M3 (эмбеддинги),
-- ChromaDB (dense retrieval),
-- BM25 (sparse retrieval),
-- RRF + cross-encoder reranking (advanced RAG).
+A local system for analyzing psychology literature powered by:
+- Ollama + Gemma (generation)
+- BGE-M3 (embeddings)
+- ChromaDB (dense retrieval)
+- BM25 (sparse retrieval)
+- RRF + cross-encoder reranking (advanced RAG)
 
-## 1) Установка
+## 1) Installation
 
 ```bash
 python3 -m venv .venv
@@ -17,13 +17,13 @@ npm install
 npm run build:ui
 ```
 
-## 2) Подготовка моделей
+## 2) Model Setup
 
-1. Установите и запустите Ollama.
-2. Загрузите модель Gemma (укажите ваш tag в `PSY_OLLAMA_MODEL`).
-3. Для embedding/rerank модели будут скачаны автоматически через Hugging Face при первом запуске.
+1. Install and start Ollama.
+2. Pull your Gemma model (set your tag via `PSY_OLLAMA_MODEL`).
+3. Embedding and reranker models are downloaded automatically from Hugging Face on first run.
 
-## 3) Переменные окружения (пример)
+## 3) Environment Variables (example)
 
 ```bash
 export PSY_OLLAMA_BASE_URL="http://127.0.0.1:11434"
@@ -37,70 +37,70 @@ export PSY_OLLAMA_MAIN_GPU=1
 export PSY_OLLAMA_NUM_GPU=1
 ```
 
-## 4) Индексация корпуса
+## 4) Indexing the Corpus
 
-Положите файлы в `data/corpus` (поддержка: PDF, EPUB, DOCX, TXT, HTML).
+Place files in `data/corpus` (supported formats: PDF, EPUB, DOCX, TXT, HTML).
 
 ```bash
 python3 -m scripts.index_corpus --profile balanced --corpus-dir data/corpus
 ```
 
-С URL-источниками:
+With URL sources:
 
 ```bash
 python3 -m scripts.index_corpus --profile balanced --corpus-dir data/corpus --urls-file data/urls.txt
 ```
 
-## 5) Запуск API
+## 5) Starting the API
 
 ```bash
 uvicorn app.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-UI доступен на `GET /` и отдается из `app/static/`.
+The UI is available at `GET /` and served from `app/static/`.
 
-### Разработка UI (TypeScript)
+### UI Development (TypeScript)
 
-- Исходник UI: `app/static/ui.ts`
-- Скомпилированный файл: `app/static/ui.js`
-- Стили и разметка: `app/static/styles.css`, `app/static/index.html`
+- UI source: `app/static/ui.ts`
+- Compiled output: `app/static/ui.js`
+- Styles and markup: `app/static/styles.css`, `app/static/index.html`
 
-Пересобрать UI после изменений:
+Rebuild the UI after making changes:
 
 ```bash
 npm run build:ui
 ```
 
-### Полезные endpoints
-- `GET /health` — проверка Ollama/Chroma.
-- `POST /index/rebuild` — переиндексация.
-- `POST /query` — вопрос-ответ с цитированием.
+### Useful Endpoints
+- `GET /health` — Ollama/Chroma health check.
+- `POST /index/rebuild` — rebuild indexes.
+- `POST /query` — question answering with citations.
 
-`POST /query` принимает `query` длиной от 3 до 2000 символов.
+`POST /query` accepts a `query` between 3 and 2000 characters.
 
-## 6) Оценка retrieval/latency
+## 6) Retrieval / Latency Evaluation
 
-Подготовьте JSONL:
+Prepare a JSONL dataset:
 
 ```json
 {"query":"What are core signs of burnout?","expected_sources":["data/corpus/burnout.pdf"]}
 ```
 
-Запуск:
+Run:
 
 ```bash
 python3 -m scripts.eval_retrieval --dataset data/eval.jsonl --profile balanced
 ```
 
-Выход: `recall_at_k`, `p50/p95 latency`, `faithfulness_proxy`.
+Output: `recall_at_k`, `p50/p95 latency`, `faithfulness_proxy`.
 
-Сравнение профилей:
+Compare profiles:
 
 ```bash
 python3 -m scripts.tune_profiles --dataset examples/eval_template.jsonl
 ```
 
-## 7) Рекомендации по dual-GPU (18GB)
+## 7) Dual-GPU Recommendations
 
-- Для вашей конфигурации (слот 1: RTX 2060, слот 2: RTX 5070) держите LLM, embeddings и reranker на RTX 5070 (`PSY_OLLAMA_MAIN_GPU=1`, `PSY_EMBEDDING_DEVICE=cuda:1`, `PSY_RERANKER_DEVICE=cuda:1`).
-- При OOM: переключите reranker на RTX 2060 (`PSY_RERANKER_DEVICE=cuda:0`) или CPU (`PSY_RERANKER_DEVICE=cpu`).
+- For a two-GPU setup (slot 0: RTX 2060, slot 1: RTX 5070), keep the LLM, embeddings, and reranker on the RTX 5070 (`PSY_OLLAMA_MAIN_GPU=1`, `PSY_EMBEDDING_DEVICE=cuda:1`, `PSY_RERANKER_DEVICE=cuda:1`).
+- If OOM: move the reranker to the RTX 2060 (`PSY_RERANKER_DEVICE=cuda:0`) or CPU (`PSY_RERANKER_DEVICE=cpu`).

@@ -1,20 +1,20 @@
-# Документация
+# Documentation
 
-| Файл | Содержание |
+| File | Contents |
 |---|---|
-| [config.md](config.md) | Все переменные окружения, профили и их параметры |
-| [ingest.md](ingest.md) | Парсинг файлов/URL, нормализация метаданных, алгоритм чанкинга |
+| [config.md](config.md) | All environment variables, profiles, and their parameters |
+| [ingest.md](ingest.md) | File/URL parsing, metadata normalization, chunking algorithm |
 | [indexing.md](indexing.md) | EmbeddingService (BGE-M3), ChromaStore, BM25Store |
-| [retrieval_pipeline.md](retrieval_pipeline.md) | RRF-слияние, cross-encoder reranking, полная схема пайплайна |
-| [generation.md](generation.md) | OllamaClient, continuation, промпты |
-| [api.md](api.md) | FastAPI endpoints, формат запросов/ответов, startup |
-| [scripts.md](scripts.md) | CLI: индексация, оценка качества, сравнение профилей |
-| [ui.md](ui.md) | UI-слой, структура static-файлов, TS-сборка и UX-поведение |
-| [prompt_safety.md](prompt_safety.md) | Защита от prompt injection и формат user message |
+| [retrieval_pipeline.md](retrieval_pipeline.md) | RRF fusion, cross-encoder reranking, full pipeline diagram |
+| [generation.md](generation.md) | OllamaClient, continuation, prompts |
+| [api.md](api.md) | FastAPI endpoints, request/response format, startup |
+| [scripts.md](scripts.md) | CLI: indexing, retrieval evaluation, profile comparison |
+| [ui.md](ui.md) | UI layer, static file structure, TS build, and UX behavior |
+| [prompt_safety.md](prompt_safety.md) | Prompt injection protection and user message format |
 
-## UI и TypeScript
+## UI and TypeScript
 
-- UI-страница: `app/static/index.html`
-- Клиентская логика: `app/static/ui.ts` (сборка в `app/static/ui.js`)
-- Стили: `app/static/styles.css`
-- Команда сборки UI: `npm run build:ui`
+- UI page: `app/static/index.html`
+- Client logic: `app/static/ui.ts` (compiled to `app/static/ui.js`)
+- Styles: `app/static/styles.css`
+- Build command: `npm run build:ui`

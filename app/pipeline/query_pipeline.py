@@ -10,6 +10,7 @@ from app.indexing.bm25_store import BM25Store
 from app.indexing.chroma_store import ChromaStore
 from app.indexing.embeddings import EmbeddingService
 from app.models import RetrievalHit
+from app.pipeline.query_analyzer import QueryAnalyzer, SECTION_MAP
 from app.retrieval.hybrid import reciprocal_rank_fusion
 from app.retrieval.rerank import Reranker
 
@@ -177,6 +178,7 @@ class QueryPipeline:
             if settings.reranker_enabled
             else None
         )
+        self.query_analyzer = QueryAnalyzer(self.ollama_client)
         self._bm25_loaded = False
 
     def _ensure_bm25(self) -> None:
@@ -194,13 +196,14 @@ class QueryPipeline:
         context: str,
         final_hits: list[RetrievalHit],
         profile,
+        num_predict: int | None = None,
     ) -> tuple[str, bool, bool]:
         """Generate one response section. Returns (text, used_retry, used_fallback)."""
         system_prompt = system_prompt_fn()
         user_prompt = _build_user_prompt(query, context, instruction)
-        logger.warning("pipeline: generation[%s] started", section)
+        logger.warning("pipeline: generation[%s] started (num_predict=%s)", section, num_predict)
         started = time.perf_counter()
-        text = self.ollama_client.generate(system_prompt, user_prompt)
+        text = self.ollama_client.generate(system_prompt, user_prompt, num_predict=num_predict)
         logger.warning("pipeline: generation[%s] finished in %.3fs", section, time.perf_counter() - started)
 
         used_retry = False
@@ -216,7 +219,7 @@ class QueryPipeline:
             retry_system_prompt = system_prompt_fn()
             retry_user_prompt = _build_retry_user_prompt(query, retry_context, instruction)
             started_retry = time.perf_counter()
-            text = self.ollama_client.generate(retry_system_prompt, retry_user_prompt)
+            text = self.ollama_client.generate(retry_system_prompt, retry_user_prompt, num_predict=num_predict)
             logger.warning("pipeline: retry[%s] finished in %.3fs", section, time.perf_counter() - started_retry)
             if not text.strip():
                 used_fallback = True
@@ -230,7 +233,23 @@ class QueryPipeline:
         query = _normalize_user_query(query)
         if len(query) < 3:
             raise ValueError("Query too short after normalization")
-        logger.warning("pipeline: start query (chars=%s)", len(query))
+
+        started_classify = time.perf_counter()
+        query_type = self.query_analyzer.classify(query)
+        classify_sec = time.perf_counter() - started_classify
+        logger.warning("pipeline: query_type=%s (classify %.3fs)", query_type, classify_sec)
+
+        active_sections = SECTION_MAP[query_type]
+        # Full num_predict for broad queries; focused budget for targeted ones
+        if query_type in ("overview", "general"):
+            section_num_predict = settings.ollama_num_predict
+        else:
+            section_num_predict = settings.ollama_num_predict_focused
+
+        logger.warning(
+            "pipeline: start query (chars=%s type=%s sections=%s num_predict=%s)",
+            len(query), query_type, active_sections, section_num_predict,
+        )
         profile = settings.profile
 
         started_embed = time.perf_counter()
@@ -271,14 +290,20 @@ class QueryPipeline:
         final_hits = reranked_hits[: profile.final_context_chunks]
         context = _build_context(final_hits, max_chars=profile.max_context_chars)
 
-        sections: dict[str, str] = {}
+        sections: dict[str, str | None] = {}
         section_retries: dict[str, bool] = {}
         section_fallbacks: dict[str, bool] = {}
         started_generation = time.perf_counter()
 
         for section_key, system_prompt_fn, instruction in _SECTION_CONFIGS:
+            if section_key not in active_sections:
+                sections[section_key] = None
+                section_retries[section_key] = False
+                section_fallbacks[section_key] = False
+                continue
             text, used_retry, used_fallback = self._generate_section(
-                section_key, system_prompt_fn, instruction, query, context, final_hits, profile
+                section_key, system_prompt_fn, instruction, query, context, final_hits, profile,
+                num_predict=section_num_predict,
             )
             sections[section_key] = text
             section_retries[section_key] = used_retry
@@ -288,6 +313,7 @@ class QueryPipeline:
 
         total_sec = time.perf_counter() - started_total
         timings = {
+            "classify_sec": round(classify_sec, 3),
             "embed_query_sec": round(embed_sec, 3),
             "dense_retrieval_sec": round(dense_sec, 3),
             "sparse_retrieval_sec": round(sparse_sec, 3),
@@ -297,8 +323,9 @@ class QueryPipeline:
             "total_sec": round(total_sec, 3),
         }
         logger.info(
-            "query timing: total=%.3fs generation=%.3fs embed=%.3fs dense=%.3fs sparse=%.3fs rerank=%.3fs retries=%s fallbacks=%s",
+            "query timing: total=%.3fs classify=%.3fs generation=%.3fs embed=%.3fs dense=%.3fs sparse=%.3fs rerank=%.3fs retries=%s fallbacks=%s",
             total_sec,
+            classify_sec,
             generation_sec,
             embed_sec,
             dense_sec,
@@ -309,6 +336,7 @@ class QueryPipeline:
         )
 
         return {
+            "query_type": query_type,
             "overview": sections["overview"],
             "self_help": sections["self_help"],
             "therapist": sections["therapist"],

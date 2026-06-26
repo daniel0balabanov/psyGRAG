@@ -25,9 +25,10 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    overview: str
-    self_help: str
-    therapist: str
+    query_type: str
+    overview: str | None
+    self_help: str | None
+    therapist: str | None
     citations: list[dict]
     debug: dict
 

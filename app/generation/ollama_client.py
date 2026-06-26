@@ -38,7 +38,6 @@ class OllamaClient:
             "model": self.model,
             "messages": [{"role": "user", "content": "hi"}],
             "stream": False,
-            "think": False,
             "keep_alive": -1,
             "options": {
                 "num_predict": 1,
@@ -53,17 +52,21 @@ class OllamaClient:
         except Exception as exc:
             logger.warning("Ollama warmup failed: %s", exc)
 
-    def _generate_once(self, messages: list[ChatMessage], request_timeout: float) -> dict:
+    def _generate_once(
+        self,
+        messages: list[ChatMessage],
+        request_timeout: float,
+        num_predict: int | None = None,
+    ) -> dict:
         payload = {
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "think": False,
             "keep_alive": -1,
             "options": {
                 "temperature": self.temperature,
                 "num_ctx": self.num_ctx,
-                "num_predict": self.num_predict,
+                "num_predict": num_predict if num_predict is not None else self.num_predict,
                 "main_gpu": self.main_gpu,
                 "num_gpu": self.num_gpu,
             },
@@ -95,13 +98,14 @@ class OllamaClient:
         system_prompt: str,
         user_prompt: str,
         timeout_s: float | None = None,
+        num_predict: int | None = None,
     ) -> str:
         request_timeout = self.timeout_s if timeout_s is None else timeout_s
         base_messages: list[ChatMessage] = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
-        body = self._generate_once(base_messages, request_timeout)
+        body = self._generate_once(base_messages, request_timeout, num_predict=num_predict)
         answer = str(body.get("message", {}).get("content", "")).strip()
         done_reason = str(body.get("done_reason", ""))
 
@@ -125,7 +129,7 @@ class OllamaClient:
                 step + 1,
                 self.max_continuations,
             )
-            cont_body = self._generate_once(continuation_messages, request_timeout)
+            cont_body = self._generate_once(continuation_messages, request_timeout, num_predict=num_predict)
             cont_answer = str(cont_body.get("message", {}).get("content", "")).strip()
             if cont_answer:
                 answer = f"{answer}\n{cont_answer}".strip()

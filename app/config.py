@@ -26,10 +26,11 @@ class Settings(BaseSettings):
     bm25_index_path: Path = Path("data/bm25/index.pkl")
 
     ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_model: str = "gemma4:e4b"
-    ollama_num_ctx: int = 10240
+    ollama_model: str = "gemma4:12b"
+    ollama_num_ctx: int = 16384
     ollama_temperature: float = 0.1
     ollama_num_predict: int = 3000
+    ollama_num_predict_focused: int = 1500
     ollama_timeout_s: float = 180.0
     ollama_max_continuations: int = 3
     ollama_main_gpu: int = 1

@@ -70,7 +70,7 @@ All settings use the `PSY_` env prefix (or `.env` file). Key variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PSY_OLLAMA_MODEL` | `gemma4:e4b` | LLM model tag |
+| `PSY_OLLAMA_MODEL` | `gemma4-12b-128k:latest` | LLM model tag |
 | `PSY_PROFILE_NAME` | `balanced` | Retrieval profile |
 | `PSY_EMBEDDING_DEVICE` | `cuda:0` | GPU for query-time embeddings |
 | `PSY_INDEXING_EMBEDDING_DEVICE` | `cuda:1` | GPU for indexing embeddings |
